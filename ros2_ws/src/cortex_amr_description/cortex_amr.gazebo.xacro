@@ -1,0 +1,233 @@
+<?xml version="1.0"?>
+<!--
+  Gazebo layer for the Cortex AMR: materials, sensors, plugins.
+
+  MATERIALS ARE NOT OPTIONAL. Gazebo Harmonic ignores the classic
+  <material>Gazebo/Orange</material> form entirely, and a link with no explicit
+  ambient/diffuse/specular renders as flat black. That is exactly why the arm
+  project's an earlier module showed "an unreadable black column" and had to be
+  re-recorded: the footage was real, the robot just had no materials.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="gz_mat" params="link r g b **extra">
+    <gazebo reference="${link}">
+      <visual>
+        <material>
+          <ambient>${r*0.45} ${g*0.45} ${b*0.45} 1</ambient>
+          <diffuse>${r} ${g} ${b} 1</diffuse>
+          <specular>0.28 0.28 0.28 1</specular>
+        </material>
+      </visual>
+      <xacro:insert_block name="extra"/>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:gz_mat link="base_link"  r="0.560" g="0.575" b="0.592"><x/></xacro:gz_mat>
+  <xacro:gz_mat link="deck_link"  r="0.128" g="0.140" b="0.152"><x/></xacro:gz_mat>
+  <xacro:gz_mat link="skirt_link" r="0.108" g="0.118" b="0.128"><x/></xacro:gz_mat>
+  <xacro:gz_mat link="stripe_l"   r="0.949" g="0.612" b="0.071"><x/></xacro:gz_mat>
+  <xacro:gz_mat link="stripe_r"   r="0.949" g="0.612" b="0.071"><x/></xacro:gz_mat>
+  <xacro:gz_mat link="mast_link"  r="0.128" g="0.140" b="0.152"><x/></xacro:gz_mat>
+  <xacro:gz_mat link="camera_link" r="0.612" g="0.639" b="0.667"><x/></xacro:gz_mat>
+  <xacro:gz_mat link="beacon_link" r="0.949" g="0.612" b="0.071"><x/></xacro:gz_mat>
+  <xacro:gz_mat link="arch_left"  r="0.108" g="0.118" b="0.128"><x/></xacro:gz_mat>
+  <xacro:gz_mat link="arch_right" r="0.108" g="0.118" b="0.128"><x/></xacro:gz_mat>
+  <xacro:gz_mat link="lidar_front_link" r="0.128" g="0.140" b="0.152"><x/></xacro:gz_mat>
+  <xacro:gz_mat link="lidar_rear_link"  r="0.128" g="0.140" b="0.152"><x/></xacro:gz_mat>
+
+  <xacro:macro name="gz_wheel" params="link">
+    <gazebo reference="${link}">
+      <visual>
+        <material>
+          <ambient>0.035 0.038 0.042 1</ambient>
+          <diffuse>0.086 0.094 0.102 1</diffuse>
+          <specular>0.10 0.10 0.10 1</specular>
+        </material>
+      </visual>
+      <mu1>1.1</mu1><mu2>1.1</mu2>
+      <kp>1e6</kp><kd>50</kd>
+    </gazebo>
+  </xacro:macro>
+  <xacro:gz_wheel link="wheel_left_link"/>
+  <xacro:gz_wheel link="wheel_right_link"/>
+
+  <xacro:macro name="gz_castor" params="link">
+    <gazebo reference="${link}">
+      <visual>
+        <material>
+          <ambient>0.05 0.055 0.06 1</ambient>
+          <diffuse>0.128 0.140 0.152 1</diffuse>
+          <specular>0.2 0.2 0.2 1</specular>
+        </material>
+      </visual>
+      <mu1>0.02</mu1><mu2>0.02</mu2>
+    </gazebo>
+  </xacro:macro>
+  <xacro:gz_castor link="castor_fl_link"/>
+  <xacro:gz_castor link="castor_fr_link"/>
+  <xacro:gz_castor link="castor_rl_link"/>
+  <xacro:gz_castor link="castor_rr_link"/>
+
+  <!-- ============ 2D safety scanners ============ -->
+  <!-- 270 deg each, on opposite chamfers, so the pair covers 360. 12 m range,
+       0.5 deg resolution: an S300-class industrial safety scanner. -->
+  <xacro:macro name="gz_lidar" params="link topic">
+    <gazebo reference="${link}">
+      <sensor name="${link}_sensor" type="gpu_lidar">
+        <topic>${topic}</topic>
+        <!-- NAME THE FRAME, exactly as the IMU needed in 6.7. Without this,
+             Gazebo stamps the LaserScan with its own scoped sensor path,
+             "cortex_amr/base_footprint/lidar_front_link_sensor", which is not a
+             TF frame and never will be. slam_toolbox then cannot transform the
+             scan into the map and logs nothing but "Message Filter dropping
+             message ... queue is full" forever while publishing no map at all.
+             Measured 2026-08-20. ${link} IS a real link, so it is a real frame. -->
+        <gz_frame_id>${link}</gz_frame_id>
+        <update_rate>15</update_rate>
+        <always_on>true</always_on>
+        <visualize>true</visualize>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>541</samples>
+              <resolution>1</resolution>
+              <min_angle>-2.356194</min_angle>
+              <max_angle>2.356194</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>0.06</min>
+            <max>12.0</max>
+            <resolution>0.01</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.008</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+  <xacro:gz_lidar link="lidar_front_link" topic="scan_front"/>
+  <xacro:gz_lidar link="lidar_rear_link"  topic="scan_rear"/>
+
+  <!-- ============ depth camera ============ -->
+  <gazebo reference="camera_link">
+    <sensor name="depth_camera" type="rgbd_camera">
+      <topic>camera</topic>
+      <update_rate>15</update_rate>
+      <always_on>true</always_on>
+      <camera>
+        <horizontal_fov>1.204</horizontal_fov>
+        <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+        <clip><near>0.12</near><far>10.0</far></clip>
+        <optical_frame_id>camera_optical_frame</optical_frame_id>
+      </camera>
+    </sensor>
+  </gazebo>
+
+  <!-- ============ IMU ============ -->
+  <gazebo reference="imu_link">
+    <sensor name="imu_sensor" type="imu">
+      <topic>imu</topic>
+      <!-- NAME THE FRAME. Without gz_frame_id, Gazebo stamps this message with
+           its own scoped sensor path, "cortex_amr/base_footprint/imu_sensor",
+           which is not a TF frame and never will be. robot_localization then
+           cannot transform the yaw rate into the robot body frame, and the fused
+           estimate comes out WORSE than wheel odometry alone. Measured
+           2026-08-19: 11.31 m of final position error against odometry's 2.23 m,
+           which would teach the exact opposite of an earlier module's thesis.
+           imu_link is a real link in the URDF, so it is a real TF frame. -->
+      <gz_frame_id>imu_link</gz_frame_id>
+      <update_rate>100</update_rate>
+      <always_on>true</always_on>
+      <imu>
+        <!-- GYRO BIAS IS THE POINT, NOT THE NOISE.
+             an earlier module measures "0.002 rad/s of bias = 34 deg over five
+             minutes" and 6.7 turns that into "27.5 deg over the 240 s loop".
+             Neither number is reachable from white noise: zero-mean noise
+             cancels as it integrates, so with mean 0 the gyro run came out
+             BETTER than wheel odometry (0.115 m against 2.228 m of closure
+             error) and this whole argument inverts. Measured
+             2026-08-19.
+             bias_mean is what makes a gyro drift. 0.002 rad/s is a mid-range
+             MEMS part and is the figure both measurements already quote. -->
+        <angular_velocity>
+          <x><noise type="gaussian"><mean>0</mean><stddev>0.0009</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0</mean><stddev>0.0009</stddev></noise></y>
+          <z>
+            <noise type="gaussian">
+              <mean>0</mean>
+              <stddev>0.00219</stddev>
+              <bias_mean>0.002</bias_mean>
+              <bias_stddev>0.0002</bias_stddev>
+            </noise>
+          </z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><noise type="gaussian"><mean>0</mean><stddev>0.017</stddev></noise></x>
+          <y><noise type="gaussian"><mean>0</mean><stddev>0.017</stddev></noise></y>
+          <z><noise type="gaussian"><mean>0</mean><stddev>0.017</stddev></noise></z>
+        </linear_acceleration>
+      </imu>
+    </sensor>
+  </gazebo>
+
+  <!-- ============ differential drive ============ -->
+  <!-- wheel_separation is the TRACK (0.445), and it is the single number that
+       makes odometry agree with the kinematics derived in an earlier module. Get it
+       wrong and the robot's reported heading drifts against its true heading,
+       which is a module in an earlier module, not a bug to hide. -->
+  <gazebo>
+    <plugin filename="gz-sim-diff-drive-system"
+            name="gz::sim::systems::DiffDrive">
+      <left_joint>wheel_left_joint</left_joint>
+      <right_joint>wheel_right_joint</right_joint>
+      <wheel_separation>${track}</wheel_separation>
+      <!-- MUST match wheel_r in cortex_amr.urdf.xacro. This read 0.0625,
+           left over from before the hoverboard fix raised the wheel to
+           0.0900, so odometry reported 69.4 m for every 100 m driven:
+           a 36.7 m error over a 120 m loop, dwarfing the 1.2 m drift
+           an earlier module teaches. Reference the property, never retype it. -->
+      <wheel_radius>${wheel_r}</wheel_radius>
+      <odom_publish_frequency>50</odom_publish_frequency>
+      <max_linear_acceleration>1.2</max_linear_acceleration>
+      <topic>cmd_vel</topic>
+      <odom_topic>odom</odom_topic>
+      <tf_topic>/tf</tf_topic>
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_footprint</child_frame_id>
+    </plugin>
+
+    <plugin filename="gz-sim-joint-state-publisher-system"
+            name="gz::sim::systems::JointStatePublisher">
+      <topic>joint_states</topic>
+      <joint_name>wheel_left_joint</joint_name>
+      <joint_name>wheel_right_joint</joint_name>
+    </plugin>
+
+    <!-- GROUND TRUTH, for an earlier module.
+         Gazebo computed the robot's position itself, so it knows it exactly.
+         This publishes that true pose as a separate topic so a module can
+         compare wheel odometry, gyro-integrated heading and the fused estimate
+         against it. On real hardware this is a motion capture rig or a surveyed
+         project; in simulation it is a topic you subscribe to, which is what 6.7
+         says it is.
+
+         DELIBERATELY NOT the same plugin as the DiffDrive odometry above:
+         DiffDrive's /odom is DERIVED FROM THE WHEELS and therefore carries the
+         very drift 6.7 exists to measure. Publishing both from one source would
+         make the comparison vacuous. This one reads the world pose directly, and
+         its frames are named truth_* so nothing can confuse the two. -->
+    <plugin filename="gz-sim-odometry-publisher-system"
+            name="gz::sim::systems::OdometryPublisher">
+      <odom_frame>truth_odom</odom_frame>
+      <robot_base_frame>base_footprint</robot_base_frame>
+      <odom_topic>truth/odom</odom_topic>
+      <odom_publish_frequency>50</odom_publish_frequency>
+      <dimensions>2</dimensions>
+    </plugin>
+  </gazebo>
+</robot>

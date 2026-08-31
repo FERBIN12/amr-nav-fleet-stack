@@ -1,0 +1,334 @@
+<?xml version="1.0"?>
+<!--
+  CORTEX AMR - the reference robot for this navigation stack.
+
+  This is a WAREHOUSE-CLASS autonomous mobile robot, not a hobby puck and not a
+  box on castors. Every dimension below is taken from a real machine class
+  (MiR250 / OTTO 100): objects come from REAL machine dimensions, and shape
+  follows FUNCTION.
+
+      footprint      800 x 580 mm     (MiR250: 800 x 580)
+      deck height    300 mm
+      payload        250 kg
+      drive          differential, two central drive wheels
+      castors        four, one per corner, swivel
+      L:H ratio      2.67:1           (a plank is ~4:1, a box is ~1:1)
+      wheel radius   90 mm, INSIDE the body envelope in dark arches
+      deck height    365 mm to the payload deck top (clear+skirt+body_h)
+
+  The features are not styling:
+    * the corners are CHAMFERED because the two diagonal safety scanners live
+      there and each needs a 270 deg view; that is why they are on opposite
+      corners rather than both at the front.
+    * the deck is STEPPED because the payload surface is a separate part that
+      bolts on; a real AMR is not one extrusion.
+    * the skirt is a BUMPER, and it is the lowest thing on the machine.
+    * the drive wheels sit at the CENTRE of the wheelbase, which is what makes
+      the differential-drive kinematics of an earlier module true of this robot: it
+      turns about a point between the two drive wheels, not about its nose.
+
+  Sensors are the real ones a Nav2 stack needs, and an earlier module-10 use each:
+    * two 2D safety lidars, front-left and rear-right chamfers, 270 deg each
+    * one depth camera on the mast, forward, for the voxel layer
+    * one IMU at the body centre, for robot_localization
+    * wheel encoders come from the diff-drive plugin
+
+  Build:  xacro cortex_amr.urdf.xacro > cortex_amr.urdf
+-->
+<robot name="cortex_amr" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ================= real machine dimensions, in metres ================= -->
+  <xacro:property name="body_l"   value="0.800"/>
+  <xacro:property name="body_w"   value="0.580"/>
+  <xacro:property name="body_h"   value="0.220"/>   <!-- main shell -->
+  <xacro:property name="deck_h"   value="0.060"/>   <!-- stepped payload deck -->
+  <xacro:property name="deck_in"  value="0.070"/>   <!-- deck inset per side -->
+  <xacro:property name="skirt_h"  value="0.040"/>   <!-- bumper skirt -->
+  <xacro:property name="chamfer"  value="0.115"/>   <!-- corner cut, scanner seat -->
+  <xacro:property name="clear"    value="0.105"/>   <!-- ground clearance -->
+
+  <xacro:property name="wheel_r"  value="0.0900"/>
+  <xacro:property name="wheel_w"  value="0.060"/>
+  <xacro:property name="track"    value="0.445"/>   <!-- drive wheel separation -->
+
+  <xacro:property name="castor_r" value="0.055"/>
+  <xacro:property name="castor_x" value="0.290"/>
+  <xacro:property name="castor_y" value="0.215"/>
+
+  <xacro:property name="mass_body"   value="62.0"/>
+  <xacro:property name="mass_wheel"  value="2.4"/>
+  <xacro:property name="mass_castor" value="0.6"/>
+
+  <!-- body centre height above ground -->
+  <xacro:property name="body_z" value="${clear + skirt_h + body_h/2}"/>
+
+  <!-- ================= materials ================= -->
+  <!-- Gazebo Harmonic IGNORES <material>Gazebo/Orange</material>; every visual
+       needs explicit ambient/diffuse/specular or it renders flat black. -->
+  <material name="shell_white"><color rgba="0.560 0.575 0.592 1"/></material>
+  <material name="shell_dark"> <color rgba="0.128 0.140 0.152 1"/></material>
+  <material name="accent">     <color rgba="0.949 0.612 0.071 1"/></material>
+  <material name="rubber">     <color rgba="0.086 0.094 0.102 1"/></material>
+  <material name="alu">        <color rgba="0.612 0.639 0.667 1"/></material>
+  <material name="lens">       <color rgba="0.180 0.290 0.400 1"/></material>
+
+  <!-- ================= inertia helpers ================= -->
+  <xacro:macro name="box_inertia" params="m x y z">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(y*y+z*z)/12}" iyy="${m*(x*x+z*z)/12}"
+               izz="${m*(x*x+y*y)/12}" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="cyl_inertia" params="m r l">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(3*r*r+l*l)/12}" iyy="${m*(3*r*r+l*l)/12}"
+               izz="${m*r*r/2}" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="sph_inertia" params="m r">
+    <inertial>
+      <mass value="${m}"/>
+      <inertia ixx="${2*m*r*r/5}" iyy="${2*m*r*r/5}" izz="${2*m*r*r/5}"
+               ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- ================= base ================= -->
+  <link name="base_footprint"/>
+
+  <link name="base_link">
+    <xacro:box_inertia m="${mass_body}" x="${body_l}" y="${body_w}" z="${body_h}"/>
+    <!-- main shell -->
+    <visual>
+      <geometry><mesh filename="package://cortex_amr_description/meshes/shell.dae"/></geometry>
+      <material name="shell_white"/>
+    </visual>
+    <collision>
+      <geometry><box size="${body_l} ${body_w} ${body_h}"/></geometry>
+    </collision>
+  </link>
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/><child link="base_link"/>
+    <origin xyz="0 0 ${body_z}"/>
+  </joint>
+
+  <!-- stepped payload deck: a SEPARATE part, inset, sitting on the shell -->
+  <link name="deck_link">
+    <xacro:box_inertia m="6.0" x="${body_l-2*deck_in}" y="${body_w-2*deck_in}" z="${deck_h}"/>
+    <visual>
+      <geometry><mesh filename="package://cortex_amr_description/meshes/deck.dae"/></geometry>
+      <material name="shell_dark"/>
+    </visual>
+    <collision>
+      <geometry><box size="${body_l-2*deck_in} ${body_w-2*deck_in} ${deck_h}"/></geometry>
+    </collision>
+  </link>
+  <joint name="deck_joint" type="fixed">
+    <parent link="base_link"/><child link="deck_link"/>
+    <origin xyz="0 0 ${body_h/2 + deck_h/2}"/>
+  </joint>
+
+  <!-- bumper skirt: the lowest part of the machine, and it wraps -->
+  <link name="skirt_link">
+    <xacro:box_inertia m="3.0" x="${body_l+0.012}" y="${body_w+0.012}" z="${skirt_h}"/>
+    <visual>
+      <geometry><mesh filename="package://cortex_amr_description/meshes/skirt.dae"/></geometry>
+      <material name="shell_dark"/>
+    </visual>
+    <collision>
+      <geometry><box size="${body_l+0.012} ${body_w+0.012} ${skirt_h}"/></geometry>
+    </collision>
+  </link>
+  <joint name="skirt_joint" type="fixed">
+    <parent link="base_link"/><child link="skirt_link"/>
+    <origin xyz="0 0 ${-body_h/2 - skirt_h/2}"/>
+  </joint>
+
+  <!-- accent stripe along each flank: reads as a machine, not a carton -->
+  <xacro:macro name="stripe" params="side y">
+    <link name="stripe_${side}">
+      <xacro:box_inertia m="0.2" x="${body_l*0.72}" y="0.010" z="0.030"/>
+      <visual>
+        <geometry><box size="${body_l*0.72} 0.010 0.030"/></geometry>
+        <material name="accent"/>
+      </visual>
+    </link>
+    <joint name="stripe_${side}_joint" type="fixed">
+      <parent link="base_link"/><child link="stripe_${side}"/>
+      <origin xyz="0 ${y} ${-body_h/2 + 0.045}"/>
+    </joint>
+  </xacro:macro>
+  <xacro:stripe side="l" y="${ body_w/2 + 0.004}"/>
+  <xacro:stripe side="r" y="${-body_w/2 - 0.004}"/>
+
+  <!-- ================= drive wheels ================= -->
+  <!-- Centred on the wheelbase. This is what makes the robot rotate about a
+       point BETWEEN the wheels, which is the ICR the whole of an earlier module is
+       about. Recessed inside the body envelope, in dark arches. -->
+  <xacro:macro name="drive_wheel" params="side reflect">
+    <link name="wheel_${side}_link">
+      <xacro:cyl_inertia m="${mass_wheel}" r="${wheel_r}" l="${wheel_w}"/>
+      <!-- Mesh, not a cylinder: ogre2 gives an SDF <cylinder> flat lighting, so
+           a near-black tyre still rendered mid-grey and read as chassis. Same
+           defect the shell had before it became a mesh with normals. -->
+      <visual>
+        <geometry><mesh filename="package://cortex_amr_description/meshes/wheel.dae"/></geometry>
+        <material name="rubber"/>
+      </visual>
+      <visual>
+        <geometry><mesh filename="package://cortex_amr_description/meshes/hub.dae"/></geometry>
+        <material name="alu"/>
+      </visual>
+      <collision>
+        <origin rpy="1.5707963 0 0"/>
+        <geometry><cylinder radius="${wheel_r}" length="${wheel_w}"/></geometry>
+        <surface><friction><ode><mu>1.1</mu><mu2>1.1</mu2></ode></friction></surface>
+      </collision>
+    </link>
+    <joint name="wheel_${side}_joint" type="continuous">
+      <parent link="base_link"/><child link="wheel_${side}_link"/>
+      <origin xyz="0 ${reflect*track/2} ${-body_h/2 - clear + wheel_r - skirt_h}"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.12" friction="0.02"/>
+    </joint>
+    <!-- the arch the wheel sits in: a dark recess, not a fender sticking out -->
+    <link name="arch_${side}">
+      <xacro:box_inertia m="0.3" x="${wheel_r*2.3}" y="${wheel_w+0.030}" z="0.105"/>
+      <visual>
+        <geometry><mesh filename="package://cortex_amr_description/meshes/arch.dae"/></geometry>
+        <material name="shell_dark"/>
+      </visual>
+    </link>
+    <joint name="arch_${side}_joint" type="fixed">
+      <parent link="base_link"/><child link="arch_${side}"/>
+      <origin xyz="0 ${reflect*(track/2 - 0.004)} ${-body_h/2 + 0.020}"/>
+    </joint>
+  </xacro:macro>
+  <xacro:drive_wheel side="left"  reflect="1"/>
+  <xacro:drive_wheel side="right" reflect="-1"/>
+
+  <!-- ================= castors ================= -->
+  <xacro:macro name="castor" params="name x y">
+    <link name="castor_${name}_link">
+      <xacro:sph_inertia m="${mass_castor}" r="${castor_r}"/>
+      <visual>
+        <geometry><sphere radius="${castor_r}"/></geometry>
+        <material name="shell_dark"/>
+      </visual>
+      <collision>
+        <geometry><sphere radius="${castor_r}"/></geometry>
+        <surface><friction><ode><mu>0.02</mu><mu2>0.02</mu2></ode></friction></surface>
+      </collision>
+    </link>
+    <joint name="castor_${name}_joint" type="fixed">
+      <parent link="base_link"/><child link="castor_${name}_link"/>
+      <origin xyz="${x} ${y} ${-body_h/2 - clear + castor_r - skirt_h}"/>
+    </joint>
+  </xacro:macro>
+  <xacro:castor name="fl" x="${ castor_x}" y="${ castor_y}"/>
+  <xacro:castor name="fr" x="${ castor_x}" y="${-castor_y}"/>
+  <xacro:castor name="rl" x="${-castor_x}" y="${ castor_y}"/>
+  <xacro:castor name="rr" x="${-castor_x}" y="${-castor_y}"/>
+
+  <!-- ================= safety scanners ================= -->
+  <!-- On OPPOSITE chamfered corners, which is how a real AMR gets 360 deg
+       coverage from two 270 deg planar scanners. -->
+  <xacro:macro name="scanner" params="name x y yaw">
+    <link name="${name}_link">
+      <xacro:cyl_inertia m="0.35" r="0.038" l="0.052"/>
+      <visual>
+        <geometry><mesh filename="package://cortex_amr_description/meshes/scanner_cowl.dae"/></geometry>
+        <material name="shell_dark"/>
+      </visual>
+      <visual>
+        <origin xyz="0 0 0.016"/>
+        <geometry><cylinder radius="0.034" length="0.030"/></geometry>
+        <material name="shell_dark"/>
+      </visual>
+      <visual>
+        <origin xyz="0 0 0.014"/>
+        <geometry><cylinder radius="0.032" length="0.016"/></geometry>
+        <material name="lens"/>
+      </visual>
+      <collision>
+        <geometry><cylinder radius="0.038" length="0.052"/></geometry>
+      </collision>
+    </link>
+    <joint name="${name}_joint" type="fixed">
+      <parent link="base_link"/><child link="${name}_link"/>
+      <origin xyz="${x} ${y} ${body_h/2 - 0.010}" rpy="0 0 ${yaw}"/>
+    </joint>
+  </xacro:macro>
+  <xacro:scanner name="lidar_front" x="${ body_l/2 - chamfer/2}" y="${ body_w/2 - chamfer/2}" yaw="0.785"/>
+  <xacro:scanner name="lidar_rear"  x="${-body_l/2 + chamfer/2}" y="${-body_w/2 + chamfer/2}" yaw="3.927"/>
+
+  <!-- ================= mast + depth camera ================= -->
+  <link name="mast_link">
+    <xacro:box_inertia m="1.1" x="0.070" y="0.120" z="0.190"/>
+    <visual>
+      <geometry><mesh filename="package://cortex_amr_description/meshes/mast.dae"/></geometry>
+      <material name="shell_dark"/>
+    </visual>
+    <collision><geometry><box size="0.070 0.120 0.190"/></geometry></collision>
+  </link>
+  <joint name="mast_joint" type="fixed">
+    <parent link="deck_link"/><child link="mast_link"/>
+    <origin xyz="${body_l/2 - deck_in - 0.060} 0 ${deck_h/2 + 0.095}"/>
+  </joint>
+
+  <link name="camera_link">
+    <xacro:box_inertia m="0.20" x="0.028" y="0.098" z="0.028"/>
+    <visual>
+      <geometry><box size="0.028 0.098 0.028"/></geometry>
+      <material name="alu"/>
+    </visual>
+    <visual>
+      <origin xyz="0.015 0.030 0"/>
+      <geometry><cylinder radius="0.010" length="0.006"/></geometry>
+      <material name="lens"/>
+    </visual>
+    <visual>
+      <origin xyz="0.015 -0.030 0"/>
+      <geometry><cylinder radius="0.010" length="0.006"/></geometry>
+      <material name="lens"/>
+    </visual>
+  </link>
+  <joint name="camera_joint" type="fixed">
+    <parent link="mast_link"/><child link="camera_link"/>
+    <origin xyz="0.045 0 0.060" rpy="0 0 0"/>
+  </joint>
+  <!-- optical frame: REP-103, z forward, x right. Point clouds arrive in this
+       frame and an earlier module spends a module on exactly this rotation. -->
+  <link name="camera_optical_frame"/>
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link"/><child link="camera_optical_frame"/>
+    <origin rpy="-1.5707963 0 -1.5707963"/>
+  </joint>
+
+  <!-- ================= status beacon + IMU ================= -->
+  <link name="beacon_link">
+    <xacro:cyl_inertia m="0.12" r="0.026" l="0.040"/>
+    <visual>
+      <geometry><cylinder radius="0.026" length="0.040"/></geometry>
+      <material name="accent"/>
+    </visual>
+  </link>
+  <joint name="beacon_joint" type="fixed">
+    <parent link="deck_link"/><child link="beacon_link"/>
+    <origin xyz="${-body_l/2 + deck_in + 0.070} 0 ${deck_h/2 + 0.020}"/>
+  </joint>
+
+  <link name="imu_link">
+    <xacro:box_inertia m="0.02" x="0.02" y="0.02" z="0.006"/>
+  </link>
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/><child link="imu_link"/>
+    <origin xyz="0 0 0"/>
+  </joint>
+
+  <xacro:include filename="$(find cortex_amr_description)/urdf/cortex_amr.gazebo.xacro"/>
+</robot>

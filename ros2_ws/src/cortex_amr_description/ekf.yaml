@@ -1,0 +1,97 @@
+### EKF for the Cortex AMR -- fuses wheel odometry with the IMU.
+#
+# Every number here corresponds to something derived in an earlier module and 6.5.
+# The two inputs are chosen because they fail in UNRELATED ways: odometry drifts
+# from wheel slip and radius error (measured: 1 mm of radius = 1.11 m per 100 m),
+# the gyro drifts from bias (measured: 0.002 rad/s = 34 deg over five minutes).
+ekf_filter_node:
+  ros__parameters:
+    # USE SIM TIME. Gazebo stamps /odom and /imu with SIMULATION time (measured:
+    # sec 1571 while the wall clock read 1787176691), so a filter running on wall
+    # time sees every message as 1.8 billion seconds stale and silently discards
+    # all of them. The symptom is brutal to diagnose: the node starts, logs its
+    # "length 15 / diagonal" line, subscribes to /odom, publishes
+    # /odometry/filtered at 31 Hz, and every single pose is 0.0 with a covariance
+    # of 2.5e+27. `ros2 topic hz` says healthy. The only hint is
+    # `ros2 topic echo /diagnostics`: "No events recorded."
+    use_sim_time: true
+    # The bridged /odom lags /clock by about 14 seconds on this machine (measured:
+    # odom stamp 1708 s against a clock of 1722 s) because the ros_gz_bridge
+    # forwards messages that were queued while the headless server ran ahead. The
+    # filter's default 0-second tolerance discards every one of them, which is why
+    # "Events since startup" stayed at 0 while `ros2 topic hz /odom` reported a
+    # healthy 47.6 Hz. Give it room to accept them.
+    transform_timeout: 0.5
+    transform_time_offset: 0.0
+    frequency: 50.0            # matches the odom publish rate from an earlier module
+    two_d_mode: true           # a ground robot: no z, no roll, no pitch
+    publish_tf: true
+
+    map_frame: map
+    odom_frame: odom
+    # base_footPRINT, not base_link. The DiffDrive plugin publishes /odom with
+    # child_frame_id "base_footprint" (see cortex_amr.gazebo.xacro), and
+    # robot_localization rejects an odometry message whose child frame is not the
+    # one configured here: measured 2026-08-19, the filter accepted the velocity
+    # inputs, published /odometry/filtered at 31 Hz, and every pose was 0.0 with a
+    # covariance of 2.5e+27 -- a diverged filter that still looks alive on `topic
+    # hz`. Nothing in the log says why.
+    base_link_frame: base_footprint
+    world_frame: odom          # THIS node publishes odom -> base_link
+
+    # ---- input 1: wheel odometry -------------------------------------------
+    # Believe its VELOCITIES, not its absolute pose. The pose is the integral of
+    # the same velocities and drifts without bound; feeding both in would count
+    # one piece of evidence twice and make the filter overconfident.
+    # /odom_cov, not /odom: the raw plugin topic has an all-zero covariance and
+    # robot_localization refuses it. scripts/capture/odom_cov_fill.py republishes
+    # the same message with a believable diagonal. See that file for where the
+    # numbers come from.
+    odom0: /odom_cov
+    odom0_config: [false, false, false,      # x,     y,     z
+                   false, false, false,      # roll,  pitch, yaw
+                   true,  true,  false,      # vx,    vy,    vz
+                   false, false, true,       # vroll, vpitch, vyaw
+                   false, false, false]      # ax, ay, az
+    odom0_differential: false
+    odom0_queue_size: 10
+    # SUPPLY THE COVARIANCE THE PLUGIN DOES NOT.
+    # gz-sim-diff-drive-system publishes /odom with an ALL-ZERO covariance matrix,
+    # and a zero covariance asserts infinite certainty, which robot_localization
+    # will not fuse: measured 2026-08-19, "Events since startup" stayed at 0 for a
+    # whole 3-lap run while /odometry/filtered happily published dead reckoning at
+    # 31 Hz. Overriding it here gives the filter a believable uncertainty for the
+    # three channels we actually feed it (vx, vy, vyaw) and lets it weight them
+    # against the IMU. The values are the plugin's own reported precision: 0.05
+    # m/s on the wheel velocities and 0.02 rad/s on yaw rate.
+    odom0_pose_rejection_threshold: 5.0
+    odom0_twist_rejection_threshold: 5.0
+
+    # ---- input 2: the IMU ---------------------------------------------------
+    # Believe its YAW RATE only. The orientation field is computed by the driver
+    # rather than measured (an earlier module), and on a ground robot the accelerometer
+    # is dominated by gravity and is not worth integrating twice (an earlier module).
+    imu0: /imu
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,        # vyaw ONLY
+                  false, false, false]
+    # THE IMU'S OWN COVARIANCE IS A LIE BY OMISSION. Gazebo fills
+    # angular_velocity_covariance from the white-noise stddev only (0.0009^2 =
+    # 8.1e-07) and says nothing about the 0.002 rad/s BIAS, which is the error that
+    # actually matters over a 240 s loop. An honest variance is bias^2 + noise^2 =
+    # 4.8e-06, so the sensor is telling the filter it is 6x better than it is.
+    # differential:true makes the filter use the CHANGE in yaw rather than the
+    # absolute value, which is what stops a constant bias from being integrated as
+    # if it were real rotation.
+    imu0_differential: true
+    imu0_queue_size: 10
+    imu0_remove_gravitational_acceleration: true
+
+    # ---- process noise ------------------------------------------------------
+    # How much the filter distrusts its own motion model per unit time (6.5).
+    # Too small: overconfident, ignores corrections. Too large: chases noise.
+    process_noise_covariance: [0.05, 0.05, 0.06, 0.03, 0.03, 0.06,
+                               0.025, 0.025, 0.04, 0.01, 0.01, 0.02,
+                               0.01, 0.01, 0.015]

@@ -1,0 +1,93 @@
+# ros_gz_bridge topic map for the Cortex AMR.
+#
+# Gazebo publishes all of these already; without this file only /joint_states
+# reaches ROS, which is exactly what `ros2 topic list` showed on 2026-08-16.
+# Nav2, slam_toolbox and robot_localization all live on the ROS side, so every
+# one of them is blind until these are bridged.
+#
+#   ros2 run ros_gz_bridge parameter_bridge \
+#     --ros-args -p config_file:=<this file>
+
+# --- the simulation clock -------------------------------------------------
+# ADDED 2026-08-20. This was MISSING, and it is the single most confusing thing
+# it can be missing. Every Nav2 node runs with use_sim_time: true, so with no
+# /clock they all sit on time zero: amcl logs "Setting pose (0.000000)" and
+# accepts an initial pose but never publishes map->odom, the global costmap then
+# reports 'Invalid frame ID "map" ... does not exist' forever, and
+# planner_server never finishes activating. Nothing reports a clock problem.
+# Symptom to remember: `ros2 topic echo /clock` is silent while the sim is
+# clearly running.
+- ros_topic_name: "/clock"
+  gz_topic_name: "/clock"
+  ros_type_name: "rosgraph_msgs/msg/Clock"
+  gz_type_name: "gz.msgs.Clock"
+  direction: GZ_TO_ROS
+
+# --- command in -----------------------------------------------------------
+- ros_topic_name: "/cmd_vel"
+  gz_topic_name: "/cmd_vel"
+  ros_type_name: "geometry_msgs/msg/Twist"
+  gz_type_name: "gz.msgs.Twist"
+  direction: ROS_TO_GZ
+
+# --- odometry out ---------------------------------------------------------
+- ros_topic_name: "/odom"
+  gz_topic_name: "/odom"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.Odometry"
+  direction: GZ_TO_ROS
+
+# TF matters as much as odom: without it RViz2 has no frames to draw in and
+# Nav2 cannot transform a goal into the robot's frame.
+- ros_topic_name: "/tf"
+  gz_topic_name: "/tf"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "gz.msgs.Pose_V"
+  direction: GZ_TO_ROS
+
+# --- the two safety scanners ---------------------------------------------
+# Named /scan_front and /scan_rear, not /scan: this robot has TWO, on opposite
+# chamfers, and merging them is a an earlier module module rather than a default.
+- ros_topic_name: "/scan_front"
+  gz_topic_name: "/scan_front"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/scan_rear"
+  gz_topic_name: "/scan_rear"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS
+
+# --- IMU, for robot_localization -----------------------------------------
+- ros_topic_name: "/imu"
+  gz_topic_name: "/imu"
+  ros_type_name: "sensor_msgs/msg/Imu"
+  gz_type_name: "gz.msgs.IMU"
+  direction: GZ_TO_ROS
+
+# --- depth camera, for the voxel layer -----------------------------------
+- ros_topic_name: "/camera/image"
+  gz_topic_name: "/camera/image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/camera/depth_image"
+  gz_topic_name: "/camera/depth_image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/camera/points"
+  gz_topic_name: "/camera/points"
+  ros_type_name: "sensor_msgs/msg/PointCloud2"
+  gz_type_name: "gz.msgs.PointCloudPacked"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/camera/camera_info"
+  gz_topic_name: "/camera/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
