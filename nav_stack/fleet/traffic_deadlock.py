@@ -10,7 +10,7 @@ INPUTS, all measured earlier in this project:
   footprint      0.800 x 0.580 m          (cortex_amr, MiR250 class)
   inscribed r    0.290 m                  (half the 0.580 width)
   circumscribed  0.494 m                  (half diagonal of 0.800x0.580)
-  aisle width    1.70 m                   (measured in 11.1 from the map)
+  aisle width    1.70 m                   (measured from the map)
   two robots hugging opposite walls sit 1.70 - 0.58 = 1.12 m apart, cost 0
   inflation radius 0.55 m, cost_scaling 3.0 (an earlier module params)
   max speed      0.5 m/s                  (an earlier module)
@@ -65,7 +65,7 @@ def inflation_cost(d_edge):
 
     253 inside the inscribed radius (lethal to the footprint), an exponential
     decay out to the inflation radius, 0 beyond it. This is the curve derived in
-    8.6 and inverted in 9.10, not a guess.
+    costmap derivation and its inversion, not a guess.
     """
     if d_edge <= 0.0:
         return 254.0                      # in collision

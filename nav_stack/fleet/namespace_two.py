@@ -5,7 +5,7 @@
 edges on this machine. This file turns those into the concrete list of changes,
 counted against OUR OWN files rather than a tutorial's.
 
-THE THREE EDGES, all verified in 11.1 (see
+THE THREE EDGES, all verified live (see
 reference/why_fleets_differ_results.json):
   frame_prefix is a SEPARATE parameter from the namespace: namespacing a node
     does not prefix the TF frames it publishes
@@ -19,9 +19,9 @@ import pathlib
 import re
 import sys
 
-CFG = pathlib.Path.home() / "amr_ws/src/cortex_amr_description/config/nav2_params.yaml"
+CFG = pathlib.Path(__file__).resolve().parents[2] / "ros2_ws/src/cortex_amr_description/nav2_params.yaml"
 BRIDGE = CFG.parent / "bridge.yaml"
-URDF = CFG.parent.parent / "urdf/cortex_amr.urdf.xacro"
+URDF = CFG.parent / "cortex_amr.urdf.xacro"
 GAZEBO = CFG.parent.parent / "urdf/cortex_amr.gazebo.xacro"
 
 
@@ -72,7 +72,7 @@ def main():
     if len(nodes) > 8:
         print("     ... and %d more" % (len(nodes) - 8))
     print("   each must become /r1/<node> or the node starts with NO parameters")
-    print("   and dies on the first one it needs. Verified in 11.1.")
+    print("   and dies on the first one it needs. Verified live.")
     print()
 
     abs_cfg = count_absolute_topics(CFG)
@@ -113,8 +113,8 @@ def main():
 
     out = {
         "provenance": "counted directly out of "
-                      "~/amr_ws/src/cortex_amr_description/{config,urdf}; the "
-                      "three edges were verified live in 11.1",
+                      "ros2_ws/src/cortex_amr_description; the "
+                      "three edges were verified live",
         "node_keys": nodes,
         "node_key_count": len(nodes),
         "absolute_topics_nav2": abs_cfg,

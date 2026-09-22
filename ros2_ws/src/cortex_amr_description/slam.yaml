@@ -10,7 +10,7 @@ slam_toolbox:
     # ---- the four that must match THIS robot -----------------------------------
     # base_footprint, not base_link. The DiffDrive plugin publishes /odom with
     # child_frame_id base_footprint (cortex_amr.gazebo.xacro), and the same
-    # mismatch silently starved the EKF in 6.6 until it was corrected there.
+    # mismatch silently starved the EKF during bring-up until it was corrected there.
     odom_frame: odom
     map_frame: map
     base_frame: base_footprint
@@ -27,7 +27,7 @@ slam_toolbox:
     # ---- sim time -------------------------------------------------------------
     # Gazebo stamps everything with SIMULATION time. A node on wall time sees each
     # message as ~1.8 billion seconds stale and discards all of them, which is
-    # exactly how the EKF in 6.6 published a healthy 31 Hz of pure dead reckoning
+    # exactly how the EKF during bring-up published a healthy 31 Hz of pure dead reckoning
     # while accepting zero measurements. /clock must also be bridged.
     use_sim_time: true
 

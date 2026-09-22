@@ -51,7 +51,7 @@ from nav2_msgs.action import NavigateToPose
 from nav_msgs.msg import Odometry
 
 # Station poses on the an earlier module map, in metres. These are the same four the
-# allocation experiment in 11.5 used, so the numbers in that module and the
+# allocation experiment used, so the numbers in that module and the
 # behaviour here describe one warehouse.
 STATIONS = [
     ("pick_a", -3.0, 5.0, 0.0),
@@ -139,7 +139,7 @@ class Mission(Node):
             if result_fut.done():
                 break
             # STALL WATCH. An active goal with no displacement is the deadlock
-            # signature from 11.4, and it is a different fault from an abort.
+            # signature measured earlier, and it is a different fault from an abort.
             if (self.last_move_t is not None
                     and time.time() - self.last_move_t > STALL_S):
                 self.get_logger().warn(

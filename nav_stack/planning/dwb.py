@@ -12,7 +12,7 @@ reference/dwb_declared_defaults.yaml:
     discretize_by_time    false    forward_prune_distance 2.0
     every critic scale    1.0      forward_point_distance 0.325
 
-Robot limits are OUR robot's, from nav2_params.yaml (measured in 8.10):
+Robot limits are OUR robot's, from nav2_params.yaml (measured):
 vx_max 0.5 m/s, wz_max 1.9 rad/s, and the real footprint 0.80 x 0.58 m.
 
 The critics implemented here are the four that decide the outcome in a corridor:

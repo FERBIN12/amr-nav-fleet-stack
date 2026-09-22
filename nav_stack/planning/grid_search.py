@@ -5,7 +5,7 @@ Everything an earlier module-9.3 quotes comes from here rather than from a textb
 the numbers describe the warehouse the learner has been driving in all project.
 
 The map: /tmp/maps/warehouse.pgm, 599 x 461 at 0.05 m/px, values
-205 unknown / 254 free / 0 occupied (measured in 7.8).
+205 unknown / 254 free / 0 occupied (measured).
 """
 import heapq
 import math

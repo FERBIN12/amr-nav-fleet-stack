@@ -33,7 +33,7 @@ MASK_FROM_DEG = 118.0     # measured self-hit arc starts at 122.5; 4.5 deg margi
 
 # TOPICS ARE RELATIVE, not absolute. This node was written for ONE robot with
 # '/scan_front' hardcoded, which is the same mistake the gazebo xacro made and
-# 11.3 had to undo: a hardcoded absolute name cannot serve two robots, and a
+# Had to be undone for multi-robot: a hardcoded absolute name cannot serve two robots, and a
 # namespace has no power over it. Relative names let ONE node definition run
 # twice, once per robot:
 #     ros2 run ... scan_declip.py --ros-args -r __ns:=/r1

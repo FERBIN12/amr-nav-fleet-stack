@@ -7,7 +7,7 @@ of that point in the robot frame. That is the whole controller.
 
 Simulated on a differential-drive unicycle at our robot's real limits so the
 numbers describe THIS machine: vx_max 0.5 m/s, wz_max 1.9 rad/s (from
-nav2_params.yaml, measured in 8.10).
+nav2_params.yaml, measured).
 """
 import heapq
 import math

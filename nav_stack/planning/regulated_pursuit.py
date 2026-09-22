@@ -65,7 +65,7 @@ INFLATION_FACTOR = 3.0
 ROTATE_TO_HEADING_MIN_ANGLE = 0.785
 ROTATE_TO_HEADING_VEL = 1.8
 
-# our robot, from nav2_params.yaml (measured in 8.10) and the real footprint
+# our robot, from nav2_params.yaml (measured) and the real footprint
 INSCRIBED_RADIUS = 0.29           # half the 0.58 m width
 FOOTPRINT_HALF_X = 0.40
 FOOTPRINT_HALF_Y = 0.29
@@ -355,7 +355,7 @@ def main():
     reg = run(path, cost, w, h, regulate=True)
     results["plain"] = plain
     results["regulated"] = reg
-    print("  %-26s %9s %9s" % ("", "plain 9.7", "regulated"))
+    print("  %-26s %9s %9s" % ("", "plain PP", "regulated"))
     for k, lbl in (("max_err_m", "max cross-track (m)"),
                    ("mean_err_m", "mean cross-track (m)"),
                    ("time_s", "time (s)"), ("mean_v", "mean speed (m/s)"),

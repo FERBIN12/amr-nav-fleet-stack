@@ -53,7 +53,7 @@ SEGMENTS = {
     "cross_2":  8.0,
     "dock":     6.0,
 }
-# A task is a route through segments; these are the pick runs from 11.5.
+# A task is a route through segments; these are the pick runs from the allocation experiment.
 ROUTES = [
     ["dock", "main_w", "cross_1"],
     ["dock", "main_w", "main_e", "cross_2"],

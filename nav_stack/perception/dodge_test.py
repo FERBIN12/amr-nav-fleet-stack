@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """10.6: send a goal, then walk an obstacle into the path and MEASURE the result.
 
-The prediction written down in 10.5: the stack should STOP rather than swerve,
+The prediction written down before the test: the stack should STOP rather than swerve,
 because a 0.5 m/s robot cannot dodge a 1.5 m/s walker (0.556 m of available
 lateral travel against 0.831 m needed).
 

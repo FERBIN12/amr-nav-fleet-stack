@@ -9,12 +9,12 @@ fleet theory.
 FROM OUR OWN CONFIG AND EARLIER MEASUREMENTS:
   footprint 0.80 x 0.58 m, circumscribed radius 0.494 m   (nav2_params.yaml)
   inflation_radius 0.70, cost_scaling_factor 3.0
-  vx_max 0.5 m/s, wz_max 1.9 rad/s                        (measured in 8.10)
+  vx_max 0.5 m/s, wz_max 1.9 rad/s (measured)
   controller 20 Hz, MPPI 2000 sequences over 2.8 s        (an earlier module)
   the warehouse loop is 40.0 m, verified collision-free    (drive_loop_6_7.py)
   min aisle clearance 1.70 m from shelf_4                  (same file)
   scan 541 beams at 10 Hz; camera 640x480 at 15 Hz         (the xacro)
-  a person needs 2.48 m of clear aisle to pass             (measured in 10.4)
+  a person needs 2.48 m of clear aisle to pass (measured)
 
 THE THREE THINGS THAT STOP BEING PRIVATE, each measured rather than asserted:
   1. THE AISLE. Two robots passing need twice the footprint plus both
@@ -61,7 +61,7 @@ def passing_width(n=2):
 def cost_at_separation(sep_m):
     """What does the OTHER robot cost you at this centre-to-centre separation?
 
-    The inflation curve from 8.6: 253 inside the inscribed radius, then
+    The inflation curve derived for this costmap: 253 inside the inscribed radius, then
     252*exp(-3.0*(d - r_inscribed)) out to the inflation radius.
     """
     d = sep_m - INSCRIBED_R
@@ -174,9 +174,9 @@ def main():
 
     out = {
         "provenance": "footprint, inflation and limits from nav2_params.yaml "
-                      "(measured in 8.10); aisle clearance from "
+                      " (measured); aisle clearance from "
                       "drive_loop_6_7.py's verified loop; sensor rates from "
-                      "cortex_amr.gazebo.xacro; the 2.48 m person figure from 10.4",
+                      "cortex_amr.gazebo.xacro; the 2.48 m person figure from the person-model probe",
         "one_robot": {"footprint": [FOOT_L, FOOT_W],
                       "circumscribed_r": round(ROBOT_R, 3),
                       "inflation_r": INFLATION_R, "vx_max": VX_MAX,

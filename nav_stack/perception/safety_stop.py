@@ -143,9 +143,9 @@ def main():
 
     out = {
         "provenance": "collision_monitor block of nav2_params.yaml; robot limits "
-                      "from the same file (measured in 8.10); scanner from "
+                      "from the same file (measured); scanner from "
                       "cortex_amr.gazebo.xacro; the stale-source behaviour was "
-                      "MEASURED in 10.6",
+                      "MEASURED",
         "config": {"time_before_collision": TIME_BEFORE,
                    "simulation_time_step": SIM_STEP,
                    "steps": int(TIME_BEFORE / SIM_STEP),
@@ -172,7 +172,7 @@ def main():
             "projection distance anything narrower than about %.2f m never "
             "reaches 6 beams. A trailing cable is exactly that. "
             "And because it sits LAST in the chain, a stale source does not "
-            "degrade the monitor, it stops the robot: measured in 10.6."
+            "degrade the monitor, it stops the robot:, measured."
             % (v_crit, VX_MAX, v_crit / VX_MAX,
                max([x["width_m"] for x in widths if not x["triggers"]] or [0]))),
     }

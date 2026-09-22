@@ -2,7 +2,7 @@
 """MPPI, implemented and measured with OUR stack's real configuration.
 
 Every parameter is copied from
-  ~/amr_ws/src/cortex_amr_description/config/nav2_params.yaml
+  ros2_ws/src/cortex_amr_description/nav2_params.yaml
 which is what actually drove the robot in an earlier module:
 
   time_steps 56, model_dt 0.05  -> a 2.8 s horizon
@@ -17,7 +17,7 @@ which is what actually drove the robot in an earlier module:
   CostCritic consider_footprint: FALSE, trajectory_point_step 2
   PathAlignCritic trajectory_point_step 4
 
-Contrast with DWB in 9.8: DWB enumerated a 20x20 grid of CONSTANT commands and
+Contrast with DWB (dwb.py): DWB enumerated a 20x20 grid of CONSTANT commands and
 picked the single best. MPPI samples 2000 noisy command SEQUENCES around the
 previous solution and takes a softmax-weighted average of all of them, so the
 command it sends may be one that no sample actually contained.
@@ -222,7 +222,7 @@ def main():
     pose = (float(px), float(py), th)
     print(f"path {len(path)} points; horizon {STEPS*DT:.2f} s; batch {BATCH}")
 
-    out = {"config_source": "amr_ws/.../nav2_params.yaml (the stack from S8)",
+    out = {"config_source": "ros2_ws/src/cortex_amr_description/nav2_params.yaml",
            "params": {"time_steps": STEPS, "model_dt": DT, "batch_size": BATCH,
                       "vx_std": VX_STD, "wz_std": WZ_STD,
                       "temperature": TEMPERATURE, "gamma": GAMMA,

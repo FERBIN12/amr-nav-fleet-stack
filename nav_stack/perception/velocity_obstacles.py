@@ -16,7 +16,7 @@ Our numbers, all from earlier testing and our own config:
     robot footprint 0.80 x 0.58 m -> circumscribed radius 0.492 m
     person collision box 0.455 x 0.501 m -> radius 0.339 m   (measured, 10.4)
     combined radius 0.831 m
-    vx_max 0.5 m/s, wz_max 1.9 rad/s      (nav2_params.yaml, measured 8.10)
+    vx_max 0.5 m/s, wz_max 1.9 rad/s      (nav2_params.yaml, measured)
     person walking 1.5 m/s
     obstacle_max_range 2.5 m, controller 20 Hz
 
@@ -98,7 +98,7 @@ def main():
     print("RADII, composed from measured geometry")
     print("  robot  %.2f x %.2f m -> circumscribed %.3f m"
           % (ROBOT_L, ROBOT_W, ROBOT_R))
-    print("  person %.3f x %.3f m -> %.3f m  (measured in 10.4)"
+    print("  person %.3f x %.3f m -> %.3f m (measured)"
           % (PERSON_W, PERSON_D, PERSON_R))
     print("  combined %.3f m: closer than this and we are already touching"
           % COMBINED_R)
@@ -147,7 +147,7 @@ def main():
     print("  our own stopping distance at %.1f m/s with 2.5 m/s2 decel is %.3f m"
           % (VX_MAX, VX_MAX * VX_MAX / (2 * 2.5)))
     print("  so below that range the honest answer is not a velocity, it is a")
-    print("  stop, and that is what the collision monitor in 10.8 is for.")
+    print("  stop, and that is what the collision monitor is for.")
     print()
     print("SANITY CHECK, by kinematics rather than by sampling:")
     for r in (2.5, 2.0, 1.5):
@@ -160,8 +160,8 @@ def main():
 
     out = {
         "provenance": "robot footprint from nav2_params.yaml, person box measured "
-                      "from MaleVisitorStatic_Col.obj in 10.4, limits from "
-                      "nav2_params.yaml measured in 8.10",
+                      "from MaleVisitorStatic_Col.obj in the person-model probe, limits from "
+                      "nav2_params.yaml (measured)",
         "radii": {"robot_circumscribed": round(ROBOT_R, 3),
                   "person": round(PERSON_R, 3),
                   "combined": round(COMBINED_R, 3)},

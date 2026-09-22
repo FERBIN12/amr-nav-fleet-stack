@@ -7,7 +7,7 @@ first instinct is that they are two sources of the same thing. They are not, and
 the difference has consequences you can measure.
 
 EVERY PARAMETER IS OURS, read out of
-~/amr_ws/src/cortex_amr_description/config/nav2_params.yaml (local_costmap):
+ros2_ws/src/cortex_amr_description/nav2_params.yaml (local_costmap):
     resolution 0.05        footprint 0.80 x 0.58 m
     raytrace_max_range 3.0     obstacle_max_range 2.5
     clearing True              marking True
@@ -97,7 +97,7 @@ def mark_and_clear(scan):
 
 
 def inflation_cost(d_m):
-    """Nav2 InflationLayer, exactly as derived in 8.6 and inverted in 9.10."""
+    """Nav2 InflationLayer, exactly as derived from the costmap and inverted for planning."""
     if d_m <= INSCRIBED:
         return 253
     if d_m >= INFLATION_RADIUS:

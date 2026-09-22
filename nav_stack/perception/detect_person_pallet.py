@@ -128,7 +128,7 @@ def main():
         t = r / walk
         print("  closing at %.1f m/s: %.2f m away is %.2f s of warning"
               % (walk, r, t))
-    commit = 2.5      # obstacle_max_range, from 10.1
+    commit = 2.5      # obstacle_max_range
     print("  marking starts at %.1f m -> %.2f s before contact"
           % (commit, commit / walk))
     print("  our controller runs at 20 Hz, so that is %d control cycles"

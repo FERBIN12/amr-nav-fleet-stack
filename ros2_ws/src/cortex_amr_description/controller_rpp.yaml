@@ -5,7 +5,7 @@
 # does not know or care which one it loaded.
 #
 # Every value here is either OUR robot's real limit (from nav2_params.yaml,
-# measured in 8.10) or the plugin's own declared default
+#, measured) or the plugin's own declared default
 # (reference/rpp_declared_defaults.yaml, dumped from a live controller_server).
 # Where they differ from stock, the reason is stated.
 
@@ -34,7 +34,7 @@ controller_server:
       lookahead_time: 1.5
 
       # --- the three regulations -------------------------------------------
-      # 9.10 measured that on our warehouse path the curvature term fires on
+      # Measured: on our warehouse path the curvature term fires on
       # 0 of 522 steps (tightest radius demanded is 1.19 m against this 0.9 m
       # trigger). It stays ENABLED anyway: the aisles are not the only place
       # this robot drives, and a regulation that costs nothing when it does not
@@ -56,7 +56,7 @@ controller_server:
 
       # --- rotate to heading ------------------------------------------------
       # This, not the velocity caps, is what fixes the large-heading-error case
-      # 9.7 could not recover from: measured 0.362 m -> 0.248 m max cross-track.
+      # plain pure pursuit could not recover from: measured 0.362 m -> 0.248 m max cross-track.
       use_rotate_to_heading: true
       rotate_to_heading_min_angle: 0.785
 

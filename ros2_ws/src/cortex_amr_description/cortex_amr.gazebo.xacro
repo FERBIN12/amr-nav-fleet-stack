@@ -76,7 +76,7 @@
     <gazebo reference="${link}">
       <sensor name="${link}_sensor" type="gpu_lidar">
         <topic>${topic}</topic>
-        <!-- NAME THE FRAME, exactly as the IMU needed in 6.7. Without this,
+        <!-- NAME THE FRAME, exactly as the IMU needed during bring-up. Without this,
              Gazebo stamps the LaserScan with its own scoped sensor path,
              "cortex_amr/base_footprint/lidar_front_link_sensor", which is not a
              TF frame and never will be. slam_toolbox then cannot transform the
@@ -146,7 +146,7 @@
       <imu>
         <!-- GYRO BIAS IS THE POINT, NOT THE NOISE.
              an earlier module measures "0.002 rad/s of bias = 34 deg over five
-             minutes" and 6.7 turns that into "27.5 deg over the 240 s loop".
+             minutes" and the IMU drift test turns that into "27.5 deg over the 240 s loop".
              Neither number is reachable from white noise: zero-mean noise
              cancels as it integrates, so with mean 0 the gyro run came out
              BETTER than wheel odometry (0.115 m against 2.228 m of closure
@@ -213,12 +213,12 @@
          This publishes that true pose as a separate topic so a module can
          compare wheel odometry, gyro-integrated heading and the fused estimate
          against it. On real hardware this is a motion capture rig or a surveyed
-         project; in simulation it is a topic you subscribe to, which is what 6.7
+         project; in simulation it is a topic you subscribe to, which is what the IMU drift test
          says it is.
 
          DELIBERATELY NOT the same plugin as the DiffDrive odometry above:
          DiffDrive's /odom is DERIVED FROM THE WHEELS and therefore carries the
-         very drift 6.7 exists to measure. Publishing both from one source would
+         very drift the IMU drift test exists to measure. Publishing both from one source would
          make the comparison vacuous. This one reads the world pose directly, and
          its frames are named truth_* so nothing can confuse the two. -->
     <plugin filename="gz-sim-odometry-publisher-system"

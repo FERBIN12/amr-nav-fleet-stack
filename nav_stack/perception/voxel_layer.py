@@ -8,7 +8,7 @@ and an overhanging shelf are different facts.
 EVERY NUMBER BELOW IS READ OUT OF OUR OWN FILES, not remembered:
 
 local_costmap voxel_layer, from
-~/amr_ws/src/cortex_amr_description/config/nav2_params.yaml:
+ros2_ws/src/cortex_amr_description/nav2_params.yaml:
     z_resolution 0.05      z_voxels 16        origin_z 0.0
     max_obstacle_height 2.0                   mark_threshold 0
     publish_voxel_map True

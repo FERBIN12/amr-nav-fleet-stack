@@ -40,7 +40,7 @@ RATE = 15
 VFOV = 2 * math.atan(math.tan(HFOV / 2) * IMG_H / IMG_W)
 CAM_Z = 0.580
 
-# laser, from 10.2
+# laser
 LASER_Z = 0.355
 LASER_FOV = 4.712389          # 270 deg
 LASER_BEAMS = 541

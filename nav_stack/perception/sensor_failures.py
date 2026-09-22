@@ -14,7 +14,7 @@ EVERY NUMBER IS EITHER OUR OWN CONFIG OR DERIVED FROM IT:
   costmap    resolution 0.05, obstacle_max_range 2.5, raytrace_max_range 3.0,
              inflation_radius 0.70, cost_scaling_factor 3.0
   monitor    source_timeout 1.0 s, and it sits LAST in the chain
-             (measured in 10.6: a stale source zeroes every command)
+             (measured: a stale source zeroes every command)
 
 THE CLASSIFICATION THAT MATTERS. A sensor failure is only actionable if you can
 tell it apart from a real reading. So each mode below is scored on whether the
@@ -62,7 +62,7 @@ MODES = [
         "costmap": "marks a permanent obstacle that moves with the robot",
         "distinguishable": True,
         "why": "it is at the same bearing and range in every single scan",
-        "signature": "26-34 beams at a fixed bearing, measured on ours in 10.6",
+        "signature": "26-34 beams at a fixed bearing, measured on this robot",
         "shape": "false_mark",
     },
     {
